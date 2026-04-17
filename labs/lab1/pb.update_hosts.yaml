@@ -1,0 +1,220 @@
+---
+- name: Update hosts
+  hosts: arista_ceos
+  gather_facts: False
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: arista.eos.eos
+    ansible_become: True
+    ansible_become_method: enable
+
+  tasks:
+    - name: Configure hub device ports as layer 3
+      arista.eos.eos_interfaces:
+        config:
+          - name: Ethernet2
+            enabled: true
+            mode: layer3
+            description: ceos2 e1
+          - name: Ethernet3
+            enabled: true
+            mode: layer3
+            description: ceos3 e1
+          - name: Ethernet4
+            enabled: true
+            mode: layer3
+            description: ceos4 e1
+          - name: Ethernet5
+            enabled: true
+            mode: layer3
+            description: ceos5 e1
+      when: inventory_hostname == 'clab-lab1-ceos1'
+
+    - name: Configure spoke device ports as layer 3
+      arista.eos.eos_interfaces:
+        config:
+          - name: Ethernet1
+            enabled: true
+            mode: layer3
+            description: ceos1 e2
+      when: inventory_hostname == 'clab-lab1-ceos2'
+
+    - name: Configure spoke device ports as layer 3
+      arista.eos.eos_interfaces:
+        config:
+          - name: Ethernet1
+            enabled: true
+            mode: layer3
+            description: ceos1 e3
+      when: inventory_hostname == 'clab-lab1-ceos3'
+
+    - name: Configure spoke device ports as layer 3
+      arista.eos.eos_interfaces:
+        config:
+          - name: Ethernet1
+            enabled: true
+            mode: layer3
+            description: ceos1 e4
+      when: inventory_hostname == 'clab-lab1-ceos4'
+
+    - name: Configure spoke device ports as layer 3
+      arista.eos.eos_interfaces:
+        config:
+          - name: Ethernet1
+            enabled: true
+            mode: layer3
+            description: ceos1 e5
+      when: inventory_hostname == 'clab-lab1-ceos5'
+
+    - name: Update hub device IP addresses
+      arista.eos.eos_l3_interfaces:
+        config:
+          - name: Ethernet2
+            ipv4:
+              - address: 192.168.12.1/24
+          - name: Ethernet3
+            ipv4:
+              - address: 192.168.13.1/24
+          - name: Ethernet4
+            ipv4:
+              - address: 192.168.14.1/24
+          - name: Ethernet5
+            ipv4:
+              - address: 192.168.15.1/24
+          - name: Loopback1
+            ipv4:
+              - address: 1.1.1.1/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos1'
+
+    - name: Update spoke device IP addresses
+      arista.eos.eos_l3_interfaces:
+        config:
+          - name: Ethernet1
+            ipv4:
+              - address: 192.168.12.2/24
+          - name: Loopback1
+            ipv4:
+              - address: 2.2.2.2/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos2'
+
+    - name: Update spoke device IP addresses
+      arista.eos.eos_l3_interfaces:
+        config:
+          - name: Ethernet1
+            ipv4:
+              - address: 192.168.13.3/24
+          - name: Loopback1
+            ipv4:
+              - address: 3.3.3.3/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos3'
+
+    - name: Update spoke device IP addresses
+      arista.eos.eos_l3_interfaces:
+        config:
+          - name: Ethernet1
+            ipv4:
+              - address: 192.168.14.4/24
+          - name: Loopback1
+            ipv4:
+              - address: 4.4.4.4/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos4'
+
+    - name: Update spoke device IP addresses
+      arista.eos.eos_l3_interfaces:
+        config:
+          - name: Ethernet1
+            ipv4:
+              - address: 192.168.15.5/24
+          - name: Loopback1
+            ipv4:
+              - address: 5.5.5.5/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos5'
+
+    - name: Enable IP routing on all devices
+      arista.eos.eos_config:
+        lines: ip routing
+
+    - name: Configure BGP on hub device
+      arista.eos.eos_bgp_global:
+        config:
+          as_number: 100
+          bgp_params:
+            log_neighbor_changes: true
+          neighbor:
+            - peer: 192.168.12.2
+              remote_as: 200
+            - peer: 192.168.13.3
+              remote_as: 300
+            - peer: 192.168.14.4
+              remote_as: 400
+            - peer: 192.168.15.5
+              remote_as: 500
+          network:
+            - address: 1.1.1.1/32
+            - address: 192.168.12.0/24
+            - address: 192.168.13.0/24
+            - address: 192.168.14.0/24
+            - address: 192.168.15.0/24
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos1'
+
+    - name: Configure BGP on spoke devices
+      arista.eos.eos_bgp_global:
+        config:
+          as_number: 200
+          bgp_params:
+            log_neighbor_changes: true
+          neighbor:
+            - peer: 192.168.12.1
+              remote_as: 100
+          network:
+            - address: 2.2.2.2/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos2'
+
+    - name: Configure BGP on spoke devices
+      arista.eos.eos_bgp_global:
+        config:
+          as_number: 300
+          bgp_params:
+            log_neighbor_changes: true
+          neighbor:
+            - peer: 192.168.13.1
+              remote_as: 100
+          network:
+            - address: 3.3.3.3/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos3'
+
+    - name: Configure BGP on spoke devices
+      arista.eos.eos_bgp_global:
+        config:
+          as_number: 400
+          bgp_params:
+            log_neighbor_changes: true
+          neighbor:
+            - peer: 192.168.14.1
+              remote_as: 100
+          network:
+            - address: 4.4.4.4/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos4'
+
+    - name: Configure BGP on spoke devices
+      arista.eos.eos_bgp_global:
+        config:
+          as_number: 500
+          bgp_params:
+            log_neighbor_changes: true
+          neighbor:
+            - peer: 192.168.15.1
+              remote_as: 100
+          network:
+            - address: 5.5.5.5/32
+        state: replaced
+      when: inventory_hostname == 'clab-lab1-ceos5'
